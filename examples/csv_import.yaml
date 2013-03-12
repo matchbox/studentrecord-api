@@ -1,0 +1,136 @@
+school:
+  - _lookup:
+      ceeb: Sec School/College CEEB Code
+    ceeb: Sec School/College CEEB Code
+    name: Sec School/College Name
+    type: Sec School/College Type
+    location:
+      city: Sec School/College City
+      state: Sec School/College State
+      country: Sec School/College Country
+    _key: secondary1
+  - _lookup:
+      ceeb: Other Sec School 1 CEEB
+    ceeb: Other Sec School 1 CEEB
+    name: Other Sec School 1 Name
+    _key: secondary2
+  - _lookup:
+      ceeb: Other Sec School 2 CEEB
+    ceeb: Other Sec School 2 CEEB
+    name: Other Sec School 2 Name
+    _key: secondary3
+organization:
+  - name: Parent 1 Employer
+    _key: employer1
+  - name: Parent 2 Employer
+    _key: employer2
+  - name: Legal Guardian Employer
+    _key: employer3
+  - name: Community Organization 1
+  - name: Community Organization 2
+  - name: Community Organization 3
+  - name: Community Organization Other
+person:
+  - name:
+      prefix: Parent 1 Title
+      first: Parent 1 First Name
+      middle: Parent 1 Middle
+      last: Parent 1 Last Name
+    job:
+      - organization: organization[employer1]
+        title: Parent 1 Position/Title
+        start: 1970-01-01
+        _required:
+          - organization[employer1]
+    _key: parent1
+  - name:
+      prefix: Parent 2 Title
+      first: Parent 2 First Name
+      middle: Parent 2 Middle
+      last: Parent 2 Last Name
+    job:
+      - organization: organization[employer2]
+        title: Parent 1 Position/Title
+        start: 1970-01-01
+        _required:
+          - organization[employer2]
+    _key: parent1
+  - name:
+      prefix: Counselor/Advisor Prefix
+      first: Counselor/Advisor First Name
+      middle: Counselor/Advisor Middle Initial
+      last: Counselor/Advisor Last Name
+    -key: counselor
+course:
+  - name: REM_ Honor 4 Grade 9
+applicant:
+  _lookup:
+    key:
+      ssn: SSN Combined
+  _required:
+    - SSN Combined
+  name:
+    first: First Name
+    middle: Middle Name
+    last: Last Name
+    suffix: Suffix
+  gender: Sex
+  key:
+    ssn: SSN Combined
+    email: Email
+    alienRegistration: Alien Registration Number
+    visa: Visa Registration Number
+    applicant: Applicant ID
+    commonapp: Common Applicant ID
+  address:
+    permanent:
+      line1: Perm Address1
+      line2: Perm Address2
+      city: Perm City
+      state: Perm State
+      country: Perm Country
+      zip: Perm Zip/Postal Code
+    current:
+      line1: Current Address1
+      line2: Current Address2
+      city: Current City
+      state: Current State
+      country: Current Country
+      zip: Current Zip/Postal Code
+  birth:
+    date: Date of Birth
+    location:
+      city: Birth City
+      state: Birth State
+      country: Birth Country
+  citizenship:
+    - Citizenship Status
+    - Dual Citizenship Country 1
+    - Dual Citizenship Country 2
+    - Dual Citizenship Country 3
+    - US Perm Citizenship Country 1
+    - US Perm Citizenship Country 2
+    - US Perm Citizenship Country 3
+    - Other Citizenship Country 1
+    - Other Citizenship Country 2
+    - Other Citizenship Country 3
+  family:
+    - person: person[parent1]
+      relationship: [Parents Marital Status, Parent 1 Type]
+      start: Date of Birth
+      _required:
+        - person[parent1]
+    - person: person[parent2]
+      relationship: [Parents Marital Status, Parent 2 Type]
+      start: Date of Birth
+      _required:
+        - person[parent2]
+  schools:
+    - school: school[secondary1]
+      degree: Type of degree
+      start: Sec School/College Date of Entry
+      counselor: person[counselor]
+      rank: Class Rank
+      size: Graduating Class Size
+      _required:
+        - school[secondary1]
