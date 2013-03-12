@@ -60,7 +60,7 @@ person:
       first: Counselor/Advisor First Name
       middle: Counselor/Advisor Middle Initial
       last: Counselor/Advisor Last Name
-    -key: counselor
+    _key: counselor
 course:
   - name: REM_ Honor 4 Grade 9
 applicant:
