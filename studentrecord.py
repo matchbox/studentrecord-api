@@ -104,13 +104,17 @@ class Endpoint(object):
         >>> endpoint[object_id]  # returns the item with ID `object_id`
         """
         if isinstance(item, slice):
+            skip = item.start or 0
+            limit = item.stop - skip if item.stop else 1000
             return self.api.get(self.endpoint,
-                                _skip=slice.start,
-                                _limit=slice.end - slice.start)['data']
+                                _skip=skip,
+                                _limit=limit,
+                                **self.filters)['data']
         elif isinstance(item, int):
             data = self.api.get(self.endpoint,
                                 _skip=item,
-                                _limit=1)
+                                _limit=1,
+                                **self.filters)
             if data['data']:
                 return data['data'][0]
             else:
@@ -140,13 +144,17 @@ class Endpoint(object):
         """
         self.remove(item)
 
-    def create(self, **kwargs):
+    def create(self, _data=None, **kwargs):
         """
         Creates a new object at this endpoint.  All keyword arguments are
         passed as data to the endpoint.  Returns the new object as returned
         by the endpoint.
         """
-        return self.api.post(self.endpoint, **kwargs)
+        if _data is None:
+            data = kwargs
+        else:
+            data = dict(_data, **kwargs)
+        return self.api.post(self.endpoint, **data)
 
     def update(self, _data=None, **kwargs):
         """
