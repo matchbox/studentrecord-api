@@ -75,6 +75,15 @@ class Endpoint(object):
         return EndpointIterator(self.api, self.endpoint,
                                 **self.filters)
 
+    def exists(self, **filters):
+        """
+        Returns a boolean indicating whether objects with the given filters
+        exists.
+        """
+        filters = dict(self.filters, **filters)
+        return bool(self.api.get(self.endpoint, _limit=1,
+                                 _fields='id', **filters)['data'])
+
     def filter(self, **kwargs):
         """
         Returns an Endpoint with the additional filters specified as keyword
