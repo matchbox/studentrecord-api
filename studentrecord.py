@@ -246,7 +246,8 @@ class StudentRecord(object):
             if response.status_code != 200:
                 raise LoginException('invalid username/password',
                                      response.content)
-            self._auth_token = response.json['authentication_token']
+            self._auth_token = json.loads(
+                response.content)['authentication_token']
         return self._auth_token
 
     @property
@@ -297,7 +298,7 @@ class StudentRecord(object):
             raise StudentRecordException(
                 '%i from %s' % (resp.status_code, resp.url),
                 resp.content)
-        return resp.json
+        return json.loads(resp.content)
 
     def get(self, endpoint, _id=None, **kwargs):
         """
@@ -324,17 +325,17 @@ class StudentRecord(object):
         return self.dispatch('delete', endpoint, _id, **kwargs)
 
     # data endpoints
-    def __getattr__(self, attr):
+    def __getitem__(self, attr):
         """
-        If we don't recognize the attribute, make an API Endpoint to access
+        If we're accessed as a dictionary, make an API Endpoint to access
         that data.
 
         >>> sr = StudentRecord(auth=auth)
-        >>> sr.person
+        >>> sr['person']
         <Endpoint>
-        >>> sr.organization
+        >>> sr['organization']
         <Endpoint>
-        >>> sr.applicant
+        >>> sr['applicant']
         <Endpoint>
         """
         return Endpoint(self, attr)

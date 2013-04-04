@@ -35,7 +35,7 @@ else:
 sr = studentrecord.StudentRecord(auth)
 sr.auth_token  # make sure we're authenticated
 # TODO allow picking a customer from the list
-sr.choose_customer(sr.customer[0])
+sr.choose_customer(sr['customer'][0])
 
 
 class CSVMapping(object):
@@ -132,6 +132,8 @@ def get_update(old, new):
     """
     output = {}
     for k, v in old.iteritems():
+        if k[0] == '_':
+            continue
         if isinstance(v, dict):
             v2 = get_update(v, new.get(k, {}))
             if not v2:
@@ -166,7 +168,7 @@ def upsert(type_, obj):
     if not query:
         return
     print type_.upper(), obj,
-    endpoint = getattr(sr, type_)
+    endpoint = sr[type_]
     try:
         existing = endpoint.filter(**query)[:1]
         if existing:
