@@ -15,7 +15,7 @@ def mbx_url(program):
 
 def push_applicant((program, auth, key_path, applicant)):
     if key_path not in applicant['key']:
-        return (None, None)
+        return None, 'skipped'
     key = applicant['key'][key_path]
     response = requests.get('%s/application/?external_id=%s' % (
         mbx_url(program), key),
@@ -33,14 +33,17 @@ def push_applicant((program, auth, key_path, applicant)):
         details={'srdc': applicant})
     objects = response.json()['objects']
     if objects:
-        func = requests.patch
-        resource_uri = '/application/%s/' % (
-            objects[0]['id'])
-        rv = 'PATCH'
+        if objects[0]['details'].get('srdc') == applicant:
+            return key, 'unmodified'
+        else:
+            func = requests.patch
+            resource_uri = '/application/%s/' % (
+                objects[0]['id'])
+            rv = 'updated'
     else:
         func = requests.post
         resource_uri = '/application/'
-        rv = 'POST'
+        rv = 'created'
 
     r = func('%s%s' % (mbx_url(program), resource_uri),
              data=json.dumps(post_data),
@@ -118,9 +121,7 @@ if __name__ == '__main__':
     for (key, rv) in pool.imap_unordered(push_applicant, iterator):
         if key is None:
             continue
-        elif rv == 'PATCH':
-            print key, 'updated'
         else:
-            print key, 'created'
+            print key, rv
     pool.close()
     pool.join()
