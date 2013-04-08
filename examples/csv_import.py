@@ -167,14 +167,14 @@ def upsert(type_, obj):
     query = query_for_obj(obj)
     if not query:
         return
-    print type_.upper(), obj,
+    print type_.upper(), query,
     endpoint = sr[type_]
     try:
         existing = endpoint.filter(**query)[:1]
         if existing:
             u = get_update(existing[0], obj)
             if u:
-                print 'UPDATED', u
+                print 'UPDATED'
                 endpoint[existing[0]] = obj
             else:
                 print 'NO CHANGE'
@@ -193,15 +193,23 @@ MAPPINGS = [(type_,
 MAPPINGS.append(('applicant', [CSVMapping(data['applicant'])]))
 
 
+def build_row(row):
+    for type_, mappings in MAPPINGS:
+        for mapping in mappings:
+            obj = mapping.build(row)
+            if not obj:
+                # missing a required field
+                continue
+            updated = upsert(type_, obj)
+            if updated and '_key' in obj:
+                key = '%s[%s]' % (type_, obj['_key'])
+                row[key] = updated['id']
+
+
 if __name__ == "__main__":
-    for row in csv.DictReader(sys.stdin):
-        for type_, mappings in MAPPINGS:
-            for mapping in mappings:
-                obj = mapping.build(row)
-                if not obj:
-                    # missing a required field
-                    continue
-                updated = upsert(type_, obj)
-                if updated and '_key' in obj:
-                    key = '%s[%s]' % (type_, obj['_key'])
-                    row[key] = updated['id']
+    import multiprocessing
+    pool = multiprocessing.Pool()
+    pool.map_async(build_row,
+                   csv.DictReader(sys.stdin))
+    pool.close()
+    pool.join()
