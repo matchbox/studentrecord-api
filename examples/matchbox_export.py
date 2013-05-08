@@ -6,27 +6,56 @@ import requests
 import json
 from itertools import repeat, izip
 
-MBX_BASE_URL = 'https://app.admitpad.com/api/v2/%s'
+MBX_BASE_URL = 'https://app.admitpad.com/api/v3/%s'
+
+
+def memoize(f):
+    """
+    Memoization decorator for a function taking a single argument. Courtesy
+    of Oren Tirosh from http://code.activestate.com/recipes/57823/.
+    """
+    class memodict(dict):
+        def __missing__(self, key):
+            ret = self[key] = f(key)
+            return ret
+    return memodict().__getitem__
 
 
 def mbx_url(program):
     return MBX_BASE_URL % program
 
 
-def push_applicant((program, auth, key_path, applicant)):
+@memoize
+def srdc_data((sr, type, id_)):
+    # the memoizer only takes single arguments for memoizing, so we pass our
+    # arguments in as a tuple.
+    return sr[type][id_]
+
+
+def push_applicant((program, auth, key_path, sr, applicant)):
     if key_path not in applicant['key']:
         return None, 'skipped'
     key = applicant['key'][key_path]
-    response = requests.get('%s/application/?external_id=%s' % (
+    for family in applicant['family']:
+        family['person'] = srdc_data((sr, 'person', family['person']))
+    for school in applicant['schools']:
+        school['school'] = srdc_data((sr, 'school', school['school']))
+        if school['counselor']:
+            school['counselor'] = srdc_data(
+                (sr, 'person', school['counselor']))
+    for job in applicant['job']:
+        job['organization'] = srdc_data((sr, 'organization',
+                                         job['organization']))
+    response = requests.get('%s/application/?external_id=%s&limit=1' % (
         mbx_url(program), key),
                             auth=auth)
     response.raise_for_status()
     post_data = dict(
         program_id=program,
         name_prefix=applicant['name']['prefix'],
-        first_name=applicant['name']['first'],
-        middle_name=applicant['name']['middle'],
-        last_name=applicant['name']['last'],
+        name_first=applicant['name']['first'],
+        name_middle=applicant['name']['middle'],
+        name_last=applicant['name']['last'],
         name_suffix=applicant['name']['suffix'],
         email=applicant['key'].get('email', ''),
         external_id=key,
@@ -117,6 +146,7 @@ if __name__ == '__main__':
     iterator = izip(repeat(options.matchbox_program),
                     repeat(options.matchbox),
                     repeat(options.key),
+                    repeat(sr),
                     sr['applicant'])
     for (key, rv) in pool.imap_unordered(push_applicant, iterator):
         if key is None:
