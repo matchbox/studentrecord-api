@@ -1,5 +1,4 @@
 from setuptools import setup
-import studentrecord
 
 VERSION = '0.1'
 
@@ -10,7 +9,6 @@ setup(
     author='Paul Swartz',
     author_email='pswartz@matchbox.net',
     description='Python implementation of the StudentRecord.com API',
-    long_description=studentrecord.__doc__,
     py_modules=['studentrecord'],
     platforms='any',
     install_requires=[
