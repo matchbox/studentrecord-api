@@ -24,10 +24,16 @@ import sys
 import csv
 import yaml
 from itertools import izip, repeat
+from collections import defaultdict
 try:
     import chardet
 except:
     chardet = None
+
+
+class GetSupportingDefaultDict(defaultdict):
+    def get(self, key, default=None):
+        return self[key]
 
 
 def build_row((importer, row)):
@@ -47,16 +53,21 @@ if __name__ == "__main__":
     usage = 'usage: %prog -s SRDC_AUTH -c CUSTOMER_ID [config filename]'
     parser = argparse.ArgumentParser(
         description='Upload a CSV file to StudentRecord.com.')
-    parser.add_argument('-m', dest='multiprocessing', action='store_const',
-                        const=True,
+    parser.add_argument('-m', dest='multiprocessing', action='store_true',
                         help='Use multiple processes to speed up the import')
     parser.add_argument(
         '-q', dest='quiet', action='append_const', const=True,
         help="-q: only display errors; -qq: don't display anything")
-    parser.add_argument(
-        '-s', '--studentrecord', metavar='USERNAME:PASSWORD', required=True,
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        '-s', '--studentrecord', metavar='USERNAME:PASSWORD',
         type=validate_srdc_auth,
         help='Username/password (or auth token) for SRDC (required)',)
+    group.add_argument(
+        '--dry-run', action='store_true',
+        help="""Don't import anything; just check the YAML file.
+If CSV files are present, the headers will be scanned and a report of \
+used/unused fields will be printed.""")
     parser.add_argument(
         '-c', '--customer', help='Customer ID to push to on StudentRecord.com',
         metavar='CUSTOMER')
@@ -67,25 +78,28 @@ if __name__ == "__main__":
         help='CSV files to upload. If none are specified, read from stdin')
     args = parser.parse_args()
 
-    sr = studentrecord.StudentRecord(args.studentrecord)
+    if not args.dry_run:
+        sr = studentrecord.StudentRecord(args.studentrecord)
 
-    try:
-        sr.auth_token  # make sure we're authenticated
-    except studentrecord.LoginException as e:
-        print 'ERROR: %s' % e.args[0]
-        sys.exit(2)
-    if args.customer:
-        sr.choose_customer(args.customer)
-    else:
-        customers = list(sr['customer'])
-        if len(customers) == 1:
-            sr.choose_customer(customers[0])
+        try:
+            sr.auth_token  # make sure we're authenticated
+        except studentrecord.LoginException as e:
+            print 'ERROR: %s' % e.args[0]
+            sys.exit(2)
+        if args.customer:
+            sr.choose_customer(args.customer)
         else:
-            print 'ERROR: must specify a Customer (-c).  Options:'
-            for c in customers:
-                print '%s: %s' % (c['name'], c['id'])
-            print
-            sys.exit(1)
+            customers = list(sr['customer'])
+            if len(customers) == 1:
+                sr.choose_customer(customers[0])
+            else:
+                print 'ERROR: must specify a Customer (-c).  Options:'
+                for c in customers:
+                    print '%s: %s' % (c['name'], c['id'])
+                print
+                sys.exit(1)
+    else:
+        sr = None
 
     data = yaml.load(args.config_file)
     mappings = [
@@ -110,7 +124,10 @@ if __name__ == "__main__":
 
     files = args.csv_file
     if not files:
-        files = [sys.stdin]
+        if args.dry_run:
+            files = []
+        else:
+            files = [sys.stdin]
 
     if args.multiprocessing:
         import multiprocessing
@@ -128,11 +145,29 @@ if __name__ == "__main__":
         if encoding != 'UTF-8':
             f = codecs.iterencode(
                 codecs.iterdecode(f, encoding), 'utf-8')
-        reader = csv.DictReader(list(f))
-        if args.multiprocessing:
-            pool.map_async(build_row, izip(repeat(importer), reader))
+        if args.dry_run:
+            # just the headers
+            data = [f.next()]
         else:
-            importer(reader)
+            data = list(f)
+        reader = csv.DictReader(data)
+        if args.dry_run:
+            d = GetSupportingDefaultDict(unicode)
+            importer(d)
+            print 'Used keys:'
+            for k in sorted(d):
+                print '*', k
+            remaining = set(reader.fieldnames) - set(d)
+            if remaining:
+                print
+                print 'Unused keys:'
+                for k in sorted(remaining):
+                    print '*', k
+        else:
+            if args.multiprocessing:
+                pool.map_async(build_row, izip(repeat(importer), reader))
+            else:
+                importer(reader)
     if args.multiprocessing:
         pool.close()
         pool.join()

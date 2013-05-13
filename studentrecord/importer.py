@@ -113,6 +113,9 @@ class Importer(object):
         appropriate endpoint.  We check our data against what was returned to
         prevent (some) spurious updates.
         """
+        if not self.sr:
+            # dry run, just no-op
+            return
         query = self.query_for_obj(obj)
         if not query:
             return
