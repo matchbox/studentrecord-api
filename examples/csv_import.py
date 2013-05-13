@@ -26,6 +26,10 @@ import yaml
 from itertools import izip, repeat
 from collections import defaultdict
 try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+try:
     import chardet
 except:
     chardet = None
@@ -132,14 +136,17 @@ used/unused fields will be printed.""")
     if args.multiprocessing:
         import multiprocessing
         pool = multiprocessing.Pool()
+    sniffer = csv.Sniffer()
     for f in files:
         encoding = 'UTF-8'
         if f is not sys.stdin and quiet < 2:
             print ('Processing %s...' % f.name),
             sys.stdout.flush()
+        data = f.read()
         if f is not sys.stdin and chardet:
-            encoding = chardet.detect(f.read())['encoding']
-            f.seek(0)
+            encoding = chardet.detect(data)['encoding']
+        dialect = sniffer.sniff(data[:1024], delimiters=',\t')
+        f = StringIO(data)
         if f is not sys.stdin and quiet < 2:
             print '(as %s)' % encoding
         if encoding != 'UTF-8':
@@ -150,7 +157,7 @@ used/unused fields will be printed.""")
             data = [f.next()]
         else:
             data = list(f)
-        reader = csv.DictReader(data)
+        reader = csv.DictReader(data, dialect=dialect)
         if args.dry_run:
             d = GetSupportingDefaultDict(unicode)
             importer(d)
