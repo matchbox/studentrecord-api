@@ -24,7 +24,6 @@ import sys
 import csv
 import yaml
 from itertools import izip, repeat
-from collections import defaultdict
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -35,7 +34,11 @@ except:
     chardet = None
 
 
-class GetSupportingDefaultDict(defaultdict):
+class GetSupportingDefaultDict(dict):
+    def __missing__(self, key):
+        self[key] = key
+        return key
+
     def get(self, key, default=None):
         return self[key]
 
@@ -159,15 +162,18 @@ used/unused fields will be printed.""")
             data = list(f)
         reader = csv.DictReader(data, dialect=dialect)
         if args.dry_run:
-            d = GetSupportingDefaultDict(unicode)
+            d = GetSupportingDefaultDict()
             importer(d)
-            print 'Used keys:'
-            for k in sorted(d):
+            fieldnames = set(reader.fieldnames)
+            d = set(d)
+            used = fieldnames & d
+            print 'Used keys (%i):' % len(used)
+            for k in sorted(used):
                 print '*', k
-            remaining = set(reader.fieldnames) - set(d)
+            remaining = fieldnames - d
             if remaining:
                 print
-                print 'Unused keys:'
+                print 'Unused keys (%i):' % len(remaining)
                 for k in sorted(remaining):
                     print '*', k
         else:
