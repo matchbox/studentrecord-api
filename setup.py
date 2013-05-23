@@ -13,6 +13,8 @@ setup(
     platforms='any',
     install_requires=[
         'requests',
+        'jinja2',
+        'yaml',
     ],
     classifiers=[
         'Development Status :: 4 - Beta',

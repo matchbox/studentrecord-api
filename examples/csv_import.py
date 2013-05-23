@@ -89,22 +89,23 @@ used/unused fields will be printed.""")
         sr = studentrecord.StudentRecord(args.studentrecord)
 
         try:
-            sr.auth_token  # make sure we're authenticated
-        except studentrecord.LoginException as e:
-            print 'ERROR: %s' % e.args[0]
-            sys.exit(2)
-        if args.customer:
-            sr.choose_customer(args.customer)
-        else:
+            # make sure we're authenticated by getting a list of our valid
+            # customers
             customers = list(sr['customer'])
-            if len(customers) == 1:
-                sr.choose_customer(customers[0])
+            if args.customer:
+                sr.choose_customer(args.customer)
             else:
-                print 'ERROR: must specify a Customer (-c).  Options:'
-                for c in customers:
-                    print '%s: %s' % (c['name'], c['id'])
-                print
-                sys.exit(1)
+                if len(customers) == 1:
+                    sr.choose_customer(customers[0])
+                else:
+                    print 'ERROR: must specify a Customer (-c).  Options:'
+                    for c in customers:
+                        print '%s: %s' % (c['name'], c['id'])
+                    print
+                    sys.exit(1)
+        except studentrecord.LoginException as e:
+            print 'ERROR: %s' % str(e)
+            sys.exit(2)
     else:
         sr = None
 
