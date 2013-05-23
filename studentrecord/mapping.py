@@ -60,7 +60,9 @@ class Mapping(object):
     def _build_str(row, name, o):
         if jinja2 and '{' in o:
             template = jinja2.Template(o)
-            o = template.render(row=row)
+            o = template.render(row=row,
+                                min=min,
+                                max=max)
         if '[' in o and o not in row:
             # if we didn't create the given related object, don't give back the
             # string
