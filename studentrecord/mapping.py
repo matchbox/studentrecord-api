@@ -67,6 +67,12 @@ class Mapping(object):
             # if we didn't create the given related object, don't give back the
             # string
             return None
-        return row.get(o, unicode(o))
+        o = row.get(o, unicode(o))
+        # convert booleans to real boolean values
+        if o in ('true', 'True'):
+            o = True
+        elif o in ('false', 'False'):
+            o = False
+        return o
 
     _build_unicode = _build_str
