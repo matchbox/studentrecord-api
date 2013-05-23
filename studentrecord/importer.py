@@ -157,7 +157,7 @@ class Importer(object):
             raise
         except:
             self.logger.error(
-                'error %s %s', type_.upper(), query,
+                'error %s %s\nobject: %s', type_.upper(), query, obj,
                 exc_info=True,
                 extra=dict(
                     action='error',
