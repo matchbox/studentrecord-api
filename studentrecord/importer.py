@@ -36,11 +36,11 @@ class Importer(object):
                 except:
                     self.logger.error('while rendering %r on row:\n%s',
                                       mapping, row,
+                                      exc_info=True,
                                       extra=dict(
                                           action='error',
                                           mapping=mapping,
-                                          type=type_,
-                                          object=obj))
+                                          type=type_))
                     return
                 if not obj:
                     # missing a required field
