@@ -8,8 +8,10 @@ class Importer(object):
     then call the resulting object with dictionaries to map the given data
     into your `StudentRecord` object.
     """
+    log_name = 'studentrecord.importer.Importer'
+
     def __init__(self, sr, mappings):
-        self.logger = logging.getLogger('studentrecord.importer.Importer')
+        self.logger = logging.getLogger(self.log_name)
         self.sr = sr
         self.mappings = mappings
 

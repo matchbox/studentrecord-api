@@ -43,11 +43,13 @@ class GetSupportingDefaultDict(dict):
         return self[key]
 
 
-def build_row((importer, row)):
+def build_row((importer, level, row)):
     """
     Multiprocessing needs a function to call, so we pass in the importer and
     row as arguments to this global function.
     """
+    importer.logger = logging.getLogger(importer.log_name)
+    importer.logger.setLevel(level)
     importer(row)
 
 
@@ -180,7 +182,9 @@ used/unused fields will be printed.""")
                     print '*', k
         else:
             if args.multiprocessing:
-                pool.map_async(build_row, izip(repeat(importer), reader))
+                importer.logger = None
+                pool.map_async(build_row, izip(repeat(importer), repeat(level),
+                                               reader))
             else:
                 importer(reader)
     if args.multiprocessing:
