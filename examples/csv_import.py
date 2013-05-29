@@ -147,9 +147,10 @@ used/unused fields will be printed.""")
             print ('Processing %s...' % f.name),
             sys.stdout.flush()
         data = f.read()
+        prefix = data[:1024 ** 2]
         if f is not sys.stdin and chardet:
-            encoding = chardet.detect(data)['encoding']
-        dialect = sniffer.sniff(data[:1024], delimiters=',\t')
+            encoding = chardet.detect(prefix)['encoding']
+        dialect = sniffer.sniff(prefix, delimiters=',\t')
         f = StringIO(data)
         if f is not sys.stdin and quiet < 2:
             print '(as %s)' % encoding
