@@ -25,6 +25,25 @@ def mbx_url(program):
     return MBX_BASE_URL % program
 
 
+def dict_diff(start, end):
+    """
+    Returns True if any values in `start` have been modified in `end`.
+    """
+    if not start and not end:
+        return False
+    if type(start) != type(end):
+        return True
+    if isinstance(start, list):
+        if len(start) != len(end):
+            return True
+        return any(dict_diff(start[i], end[i])
+                   for i in range(len(start)))
+    if isinstance(start, dict):
+        return any(dict_diff(start[k], end.get(k))
+                   for k in start)
+    return start != end
+
+
 @memoize
 def srdc_data((sr, type, id_)):
     # the memoizer only takes single arguments for memoizing, so we pass our
@@ -62,7 +81,7 @@ def push_applicant((program, auth, key_path, sr, applicant)):
         details={'srdc': applicant})
     objects = response.json()['objects']
     if objects:
-        if objects[0]['details'].get('srdc') == applicant:
+        if not dict_diff(applicant, objects[0]['details'].get('srdc')):
             return key, 'unmodified'
         else:
             func = requests.patch
