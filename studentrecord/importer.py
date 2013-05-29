@@ -92,18 +92,34 @@ class Importer(object):
         dictionary containing the updated values.  Recurses into child
         dictionaries, but not child lists.
         """
+        if not isinstance(new, dict):
+            if old == new:
+                return None
+            else:
+                return new
         output = {}
         for k, v in old.iteritems():
+            if k not in new:
+                continue
             if k[0] == '_':
                 continue
             if isinstance(v, dict):
-                v2 = self.get_update(v, new.get(k, {}))
+                v2 = self.get_update(v, new[k])
                 if not v2:
                     continue
+            elif isinstance(v, list):
+                v2 = new[k]
+                if len(v) == len(v2) and v:
+                    diffs = [self.get_update(*z) for z in zip(v, v2)]
+                    if not any(diffs):
+                        # they're all the same, don't bother sending the change
+                        continue
             else:
                 if v is not None:
                     if isinstance(v, basestring):
-                        v2 = new.get(k, v).decode('utf-8')
+                        v2 = new.get(k, v)
+                        if isinstance(v2, basestring):
+                            v2 = v2.decode('utf-8')
                     else:
                         t = type(v)
                         v2 = t(new.get(k, v))
@@ -146,6 +162,7 @@ class Importer(object):
                             query=query,
                             update=u,
                             object=obj))
+                    print u
                 else:
                     self.logger.info(
                         'no change %s %s', type_.upper(), query,
