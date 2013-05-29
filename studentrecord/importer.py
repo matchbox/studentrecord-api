@@ -29,7 +29,17 @@ class Importer(object):
     def _build_row(self, row):
         for type_, mappings in self.mappings:
             for mapping in mappings:
-                obj = mapping(row)
+                try:
+                    obj = mapping(row)
+                except:
+                    self.logger.error('while rendering %r on row:\n%s',
+                                      mapping, row,
+                                      extra=dict(
+                                          action='error',
+                                          mapping=mapping,
+                                          type=type_,
+                                          object=obj))
+                    return
                 if not obj:
                     # missing a required field
                     continue

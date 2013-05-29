@@ -20,6 +20,12 @@ class Mapping(object):
     def __init__(self, mapping):
         self.mapping = mapping
 
+    def __str__(self):
+        return 'Mapping(%r)' % (self.mapping,)
+
+    def __repr__(self):
+        return str(self)
+
     def __call__(self, *rows):
         """
         Build a dictionary for the given row(s).  If passed a single row, just
