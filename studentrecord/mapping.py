@@ -2,6 +2,12 @@ try:
     import jinja2
 except ImportError:
     jinja2 = None  # noqa
+try:
+    import dateutil
+except ImportError:
+    dateutil = None
+else:
+    import dateutil.parser
 
 
 class Mapping(object):
@@ -51,9 +57,11 @@ class Mapping(object):
 
     def _build_dict(self, row, name, o):
         d = dict((k, self._build(row, k, v)) for (k, v) in o.iteritems())
-        d = dict(i for i in d.iteritems() if i[1])
-        if '_required' in o and not all(d.get('_required', [False])):
-            return None
+        d = dict(i for i in d.iteritems() if i[1] != '')
+        if '_required' in o:
+            required = d.pop('_required', None)
+            if not required or not all(required):
+                return None
         return d
 
     def _build_list(self, row, name, o):
@@ -79,6 +87,13 @@ class Mapping(object):
             o = True
         elif o in ('false', 'False'):
             o = False
+        elif o == 'None':
+            return None
+        elif dateutil and '-' in o or '/' in o:
+            try:
+                o = dateutil.parser.parse(o).isoformat()
+            except:
+                pass
         return o
 
     _build_unicode = _build_str
