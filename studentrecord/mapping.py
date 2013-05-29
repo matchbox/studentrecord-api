@@ -76,3 +76,7 @@ class Mapping(object):
         return o
 
     _build_unicode = _build_str
+
+    @staticmethod
+    def _build_datetime(row, name, o):
+        return o.isoformat()
