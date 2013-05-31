@@ -122,7 +122,13 @@ class Importer(object):
                             v2 = v2.decode('utf-8')
                     else:
                         t = type(v)
-                        v2 = t(new.get(k, v))
+                        try:
+                            v2 = t(new.get(k, v))
+                        except ValueError:
+                            if t is int:
+                                v2 = float(new.get(k, v))
+                            else:
+                                raise
                 else:
                     v2 = new.get(k, v)
             if v2 != v:
