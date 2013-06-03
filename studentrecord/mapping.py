@@ -81,6 +81,9 @@ class Mapping(object):
             # if we didn't create the given related object, don't give back the
             # string
             return None
+        if name == '_key':
+            # Don't do a lookup on keys
+            return unicode(o)
         o = row.get(o, unicode(o))
         # convert booleans to real boolean values
         if o in ('true', 'True'):
