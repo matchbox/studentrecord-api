@@ -82,6 +82,8 @@ class Mapping(object):
             o = True
         elif o in ('false', 'False'):
             o = False
+        elif o in ('null', 'none', 'None'):
+            o = None
         return o
 
     _build_unicode = _build_str
